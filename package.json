@@ -1,0 +1,26 @@
+{
+  "name": "vue-source-study",
+  "version": "1.0.0",
+  "description": "vue源码解析",
+  "main": "rollup.config.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.17.5",
+    "@babel/preset-env": "^7.16.11",
+    "rollup": "^2.67.3",
+    "rollup-plugin-babel": "^4.4.0"
+  },
+  "scripts": {
+    "serve": "rollup -c -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wlf1112/vue-source-study.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wlf1112/vue-source-study/issues"
+  },
+  "homepage": "https://github.com/wlf1112/vue-source-study#readme"
+}
