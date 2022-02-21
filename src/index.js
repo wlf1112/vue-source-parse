@@ -5,6 +5,7 @@ function Vue(options) {
     this._init(options); // 初始化操作  
 }
 
+// 扩展原型
 initMixin(Vue);
 
 export default Vue;

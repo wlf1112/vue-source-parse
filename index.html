@@ -15,12 +15,14 @@
         // 典型的MVVM view vm model
         let vm=new Vue({
             el:'#app',
-            data:{
-                name:'zf'
+            data(){
+                return {
+                    name:[1,2,3]
+                }
             }
         })
-
-        console.log(vm.$options);
+        // vm.name===vm._data.name
+        console.log(vm.name);
     </script>
 </body>
 </html>
