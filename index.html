@@ -22,7 +22,11 @@
             }
         })
         // vm.name===vm._data.name
-        console.log(vm.name);
+        vm.name.push(1,2,3);
+        // 数组没有监控 索引的变化，但是索引对应的内容是对象类型，需要被监控 Object.freeze
+
+        // vue2内部不对索引进行拦截，因为消耗严重，内部数组不采用Object.defineProperty
+        // push shift pop unshift reverse sort splice 7个方法属于变异方法，会改变数组
     </script>
 </body>
 </html>

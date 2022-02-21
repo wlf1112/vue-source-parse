@@ -46,15 +46,72 @@
     return _typeof(val) === 'object' && val !== null;
   }
 
+  var oldArrayPrototype = Array.prototype;
+  var arrayMethods = Object.create(oldArrayPrototype); // arrayMethods.__proto__=Array.prototype 继承
+
+  var methods = ['push', 'shift', 'unshift', 'pop', 'sort', 'splice'];
+  methods.forEach(function (method) {
+    // 用户调用的如果是以上七个方法，会用自己重写的方法，否则用原来的数组方法
+    arrayMethods[method] = function () {
+      var _oldArrayPrototype$me;
+
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      (_oldArrayPrototype$me = oldArrayPrototype[method]).call.apply(_oldArrayPrototype$me, [this].concat(args)); // arr.push({a:1},{b:1})
+      // arr.splice(0,1,xxx);
+
+
+      var inserted;
+      var ob = this.__ob__; // 根据当前数组获取到Observe实例
+
+      switch (method) {
+        case 'push':
+        case 'unshift':
+          inserted = args; //就是新增的内容
+
+          break;
+
+        case 'splice':
+          inserted = args.slice(2);
+          break;
+      } // 如果有新增的内内容要进行继续劫持，需要观测数组中的每一项，而不是数组
+
+
+      if (inserted) {
+        ob.observeArray(inserted);
+      }
+    };
+  });
+
   var Observe = /*#__PURE__*/function () {
     function Observe(data) {
       _classCallCheck(this, Observe);
 
       // 对对象中的所有属性进行劫持
-      this.walk(data);
+      data.__ob__ = this; //所有被劫持过的属性都有__ob__属性
+
+      if (Array.isArray(data)) {
+        // 数组的劫持逻辑
+        // 对数组原来的方法进行改写，切片编程 高阶函数
+        data.__proto__ = arrayMethods; // 如果数组中的数据是对象类型，需要监控对象的变化
+
+        this.observeArray(data);
+      } else {
+        this.walk(data); // 对象的劫持逻辑
+      }
     }
 
     _createClass(Observe, [{
+      key: "observeArray",
+      value: function observeArray(data) {
+        // 对数组中的数组 和数组中的对象再次劫持，递归
+        data.forEach(function (item) {
+          observe(item);
+        });
+      }
+    }, {
       key: "walk",
       value: function walk(data) {
         Object.keys(data).forEach(function (key) {
@@ -86,6 +143,10 @@
   function observe(data) {
     // 如果是对象才监测
     if (!isObject(data)) {
+      return;
+    }
+
+    if (data.__ob__) {
       return;
     } // 默认最外层的data必须是一个对象
 
@@ -122,7 +183,8 @@
   }
 
   function initData(vm) {
-    var data = vm.$options.data; // vue2中会将data中的所有数据，进行数据劫持 Object.defineProperty
+    var data = vm.$options.data; //vue内部会对属性检测，如果是以$开头，不会进行代理
+    // vue2中会将data中的所有数据，进行数据劫持 Object.defineProperty
     // 此时vm和data没有关系，通过vm._data进行关联
 
     data = vm._data = isFunction(data) ? data.call(vm) : data;
