@@ -1,10 +1,17 @@
 import { isObject } from "../util";
 import { arrayMethods } from "./array";
 
+// 如果数据是对象，会将对象不停的递归，进行劫持
+// 如果是数组，会劫持数组的方法，并对数组中不是基本数据类型的进行监测
+
 // 类监测数据的变化，类有类型；对象无类型
 class Observe {
     constructor(data) { // 对对象中的所有属性进行劫持
-        data.__ob__ = this; //所有被劫持过的属性都有__ob__属性
+        Object.defineProperty(data, '__ob__', {
+            value: this,
+            enumerable: false // 不可枚举
+        })
+        //data.__ob__ = this; //所有被劫持过的属性都有__ob__属性
         if (Array.isArray(data)) {
             // 数组的劫持逻辑
             // 对数组原来的方法进行改写，切片编程 高阶函数
@@ -50,7 +57,7 @@ export function observe(data) {
     if (data.__ob__) {
         return;
     }
-    
+
     // 默认最外层的data必须是一个对象
     return new Observe(data);
 }

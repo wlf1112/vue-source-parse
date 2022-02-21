@@ -85,12 +85,19 @@
     };
   });
 
+  // 如果是数组，会劫持数组的方法，并对数组中不是基本数据类型的进行监测
+  // 类监测数据的变化，类有类型；对象无类型
+
   var Observe = /*#__PURE__*/function () {
     function Observe(data) {
       _classCallCheck(this, Observe);
 
       // 对对象中的所有属性进行劫持
-      data.__ob__ = this; //所有被劫持过的属性都有__ob__属性
+      Object.defineProperty(data, '__ob__', {
+        value: this,
+        enumerable: false // 不可枚举
+
+      }); //data.__ob__ = this; //所有被劫持过的属性都有__ob__属性
 
       if (Array.isArray(data)) {
         // 数组的劫持逻辑
