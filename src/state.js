@@ -35,6 +35,7 @@ function initData(vm) {
     // 此时vm和data没有关系，通过vm._data进行关联
     data=vm._data = isFunction(data) ? data.call(vm) : data;
     
+    // vm.xxx===vm._data.xxx
     for (let key in data) {
         proxy(vm, '_data', key);
     }

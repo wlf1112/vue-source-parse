@@ -7,6 +7,7 @@ let methods = [
     'shift',
     'unshift',
     'pop',
+    'reverse',
     'sort',
     'splice'
 ]

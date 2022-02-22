@@ -49,7 +49,7 @@
   var oldArrayPrototype = Array.prototype;
   var arrayMethods = Object.create(oldArrayPrototype); // arrayMethods.__proto__=Array.prototype 继承
 
-  var methods = ['push', 'shift', 'unshift', 'pop', 'sort', 'splice'];
+  var methods = ['push', 'shift', 'unshift', 'pop', 'reverse', 'sort', 'splice'];
   methods.forEach(function (method) {
     // 用户调用的如果是以上七个方法，会用自己重写的方法，否则用原来的数组方法
     arrayMethods[method] = function () {
@@ -194,7 +194,7 @@
     // vue2中会将data中的所有数据，进行数据劫持 Object.defineProperty
     // 此时vm和data没有关系，通过vm._data进行关联
 
-    data = vm._data = isFunction(data) ? data.call(vm) : data;
+    data = vm._data = isFunction(data) ? data.call(vm) : data; // vm.xxx===vm._data.xxx
 
     for (var key in data) {
       proxy(vm, '_data', key);
@@ -208,16 +208,33 @@
     Vue.prototype._init = function (options) {
       // el.data
       var vm = this;
-      vm.$options = options; // 见用户的选项都放到了当前实例
+      vm.$options = options; // 用户的选项都放到了当前实例
       // 对数据进行初始化 watch computed props data ...
 
       initState(vm);
+
+      if (vm.$options.el) {
+        // 将数据挂载到这个模版上
+        vm.$mount(vm.$options.el);
+      }
+    };
+
+    Vue.prototype.$mount = function (el) {
+      var vm = this;
+      var options = vm.$options;
+      el = document.querySelector(el); // 把模版转换成对应的渲染函数 -> 虚拟dom概念vnode -> diff算法更新虚拟
+      // dom -> 产生真实节点，更新
+
+      if (!vm.$options.render) {
+        // 没有render用template
+        options.template;
+      }
     };
   }
 
   function Vue(options) {
     // options为用户传入的选项
-    this._init(options); // 初始化操作  
+    this._init(options); // 初始化操作，将_init方法放在原型上，是为了组件可以调用
 
   } // 扩展原型
 
