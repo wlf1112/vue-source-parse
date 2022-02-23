@@ -1,3 +1,4 @@
+import { compilerFunction } from "./compiler/index";
 import { initState } from "./state";
 
 export function initMixin(Vue) { // 表示在vue的基础上做一次混合操作
@@ -23,7 +24,11 @@ export function initMixin(Vue) { // 表示在vue的基础上做一次混合操�
         // dom -> 产生真实节点，更新
         if (!vm.$options.render) { // 没有render用template
             let template = options.template;
-            
+            if (!template && el) { // 用户也没有传递template，获取el的内容作为模板
+                template = el.outerHTML;
+                let render = compilerFunction(template);
+                options.render = render; // 生成渲染函数
+            }
         }
 
     }
