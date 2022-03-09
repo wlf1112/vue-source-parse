@@ -6,16 +6,51 @@ const endTag = new RegExp(("^<\\/" + qnameCapture + "[^>]*>")); // 匹配闭合�
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; 
 const defaultTagRE = /\{((?:.|\r?\n)+?)\}\}/g; //{{}}
 
-// html字符串解析成dom 对应的脚本触发 tokens
+// 解析后的结果 组装成一个数结构  需要用到：栈
+function createAstElement(tagName, attrs) {
+    return {
+        tag: tagName,
+        type: 1,
+        children: [],
+        parent: null,
+        attrs
+    }
+}
 
+// html字符串解析成dom 对应的脚本触发 tokens  <div id="app">{{name}}</div>
+let root = null;
+let stack = [];
 function start(tagName,attributes) {
     console.log('start', tagName, attributes);
+    let parent = stack[stack.length - 1];
+    let element = createAstElement(tagName, attributes);
+    if (!root) {
+        root = element;
+    }
+    element.parent = parent;
+    if (parent) {
+        parent.children.push(element);
+    }
+   
+    stack.push(element);
 }
 function end(tagName) {
     console.log('end', tagName);
+    let last = stack.pop();
+    if (last.tag !== tagName) {
+        throw new Error('标签有误');
+    }
 }
 function chars(text) {
     console.log('chars', text);
+    text = text.replace(/\s/g, "");
+    let parent = stack[stack.length - 1];
+    if (text) {
+        parent.children.push({
+            type: 3,
+            text
+        })
+    }
 }
 
 function parserHTML(html) {
@@ -75,4 +110,6 @@ function parserHTML(html) {
 export function compilerFunction(template) {
         
     parserHTML(template);
+
+    console.log(root);
 }
