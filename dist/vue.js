@@ -4,7 +4,7 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
-    var defaultTagRE = /\{((?:.|\r?\n)+?)\}\}/g; //{{}}
+    var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g; //{{}}
     // html字符串->_c('div', {id:'app'},'hello')
 
     function genProps(attrs) {
@@ -58,7 +58,7 @@
             tokens.push(JSON.stringify(text.slice(lastIndex)));
           }
 
-          return "_v('".concat(tokens.join('+'), "')");
+          return "_v(".concat(tokens.join('+'), ")");
         }
       }
     }

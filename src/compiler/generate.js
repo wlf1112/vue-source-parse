@@ -1,4 +1,4 @@
-const defaultTagRE = /\{((?:.|\r?\n)+?)\}\}/g; //{{}}
+const defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g; //{{}}
 
 // html字符串->_c('div', {id:'app'},'hello')
 
@@ -42,7 +42,7 @@ function gen(el) {
                 tokens.push(JSON.stringify(text.slice(lastIndex)));
             }
 
-            return `_v('${tokens.join('+')}')`;
+            return `_v(${tokens.join('+')})`;
         }
         
     }
