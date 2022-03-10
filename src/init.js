@@ -1,4 +1,5 @@
 import { compilerFunction } from "./compiler/index";
+import { mountComponent } from "./lifecycle";
 import { initState } from "./state";
 
 export function initMixin(Vue) { // 表示在vue的基础上做一次混合操作
@@ -30,6 +31,8 @@ export function initMixin(Vue) { // 表示在vue的基础上做一次混合操�
                 options.render = render; // 生成渲染函数
             }
         }
+        console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
 
+        mountComponent(vm, el);  // 组件的挂载
     }
 }

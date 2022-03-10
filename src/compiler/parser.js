@@ -111,3 +111,9 @@ export function parserHTML(html) {
 
 // 看一下用户是否传入了render,没传入，可能传入的是tenplate，template如果也没有传入
 // 将我们的html->词法解析（开始标签，结束标签，属性，文本）
+// -> ast语法树 用来描述html的语法的 stack
+
+// codegen <div>hello</div> -> _c('div',{},'hello') -> 让字符串执行
+// 字符串如何转成代码 如果用eval 比较耗性能，会有作用域问题
+
+// 模版引擎 new Function+with来实现

@@ -222,6 +222,10 @@
       return root;
     } // 看一下用户是否传入了render,没传入，可能传入的是tenplate，template如果也没有传入
     // 将我们的html->词法解析（开始标签，结束标签，属性，文本）
+    // -> ast语法树 用来描述html的语法的 stack
+    // codegen <div>hello</div> -> _c('div',{},'hello') -> 让字符串执行
+    // 字符串如何转成代码 如果用eval 比较耗性能，会有作用域问题
+    // 模版引擎 new Function+with来实现
 
     function compilerFunction(template) {
       var root = parserHTML(template); // 生成代码
@@ -229,7 +233,27 @@
       //     return _c('div', {id:'app'},'hello')
       // }
 
-      generate(root); // html->ast（只能描述语法 语法不存在的属性无法描述）->render函数->虚拟dom（增加额外属性）-> 生成真实dom
+      var code = generate(root);
+      var render = new Function("with(this){return ".concat(code, "}")); // code中会用到数据  数据在vm上
+
+      return render; // html->ast（只能描述语法 语法不存在的属性无法描述）->render函数 (with+new Function)->虚拟dom（增加额外属性）-> 生成真实dom
+    }
+
+    function lifecycleMixin(Vue) {
+      Vue.prototype._update = function (vnode) {
+        console.log(vnode);
+      };
+    }
+    function mountComponent(vm, el) {
+      // 更新函数，数据变化后，会在此调用函数
+      var updateComponent = function updateComponent() {
+        // 调用render函数，生成虚拟dom
+        vm._update(vm._render()); // 后续更新可以调用updateComponent
+        // 用虚拟dom生成真实dom   
+
+      };
+
+      updateComponent();
     }
 
     function _typeof(obj) {
@@ -464,6 +488,62 @@
             options.render = render; // 生成渲染函数
           }
         }
+
+        console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
+
+        mountComponent(vm); // 组件的挂载
+      };
+    }
+
+    function createElement(vm, tag) {
+      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+      for (var _len = arguments.length, children = new Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
+        children[_key - 3] = arguments[_key];
+      }
+
+      return vnode(vm, tag, data, data.key, children, undefined);
+    }
+    function createTextElement(vm, text) {
+      return vnode(vm, undefined, undefined, undefined, undefined, undefined);
+    }
+
+    function vnode(vm, tag, data, key, children, text) {
+      return {
+        vm: vm,
+        tag: tag,
+        data: data,
+        key: key,
+        children: children,
+        text: text
+      };
+    }
+
+    function renderMixin(Vue) {
+      Vue.prototype._c = function (tag, data) {
+        for (var _len = arguments.length, children = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+          children[_key - 2] = arguments[_key];
+        }
+
+        //createElement
+        return createElement.apply(void 0, [this].concat(Array.prototype.slice.call(arguments)));
+      };
+
+      Vue.prototype._v = function (text) {
+        //
+        return createTextElement(this);
+      };
+
+      Vue.prototype._s = function (val) {
+        return JSON.stringify(val);
+      };
+
+      Vue.prototype._render = function () {
+        var vm = this;
+        var render = vm.$options.render; // 就是我们解析出来的render方法，同时也有可能是用户写的
+
+        var vnode = render.call(vm);
+        return vnode;
       };
     }
 
@@ -475,6 +555,9 @@
 
 
     initMixin(Vue);
+    renderMixin(Vue); //_render
+
+    lifecycleMixin(Vue); //_update
 
     return Vue;
 
