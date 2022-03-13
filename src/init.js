@@ -20,6 +20,7 @@ export function initMixin(Vue) { // 表示在vue的基础上做一次混合操�
         const vm = this;
         const options = vm.$options;
         el = document.querySelector(el);
+        vm.$el=el;
 
         // 把模版转换成对应的渲染函数 -> 虚拟dom概念vnode -> diff算法更新虚拟
         // dom -> 产生真实节点，更新
@@ -33,6 +34,6 @@ export function initMixin(Vue) { // 表示在vue的基础上做一次混合操�
         }
         console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
 
-        mountComponent(vm, el);  // 组件的挂载
+        mountComponent(vm, el);  // 组件的挂载流程
     }
 }

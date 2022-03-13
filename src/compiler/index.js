@@ -11,8 +11,7 @@ export function compilerFunction(template) {
     let code = generate(root);
 
     let render = new Function(`with(this){return ${code}}`);  // code中会用到数据  数据在vm上
-    return render;
 
-    
+    return render;    
     // html->ast（只能描述语法 语法不存在的属性无法描述）->render函数 (with+new Function)->虚拟dom（增加额外属性）-> 生成真实dom
 }   

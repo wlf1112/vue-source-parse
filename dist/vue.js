@@ -74,11 +74,9 @@
     }
 
     function generate(el) {
-      console.log('---------'); // 遍历树，将树拼接成字符串
-
+      // 遍历树，将树拼接成字符串
       var children = genChildren(el);
       var code = "_c('".concat(el.tag, "',").concat(el.attrs.length ? genProps(el.attrs) : 'undefined', ")").concat(children ? ",".concat(children) : '');
-      console.log(code);
       return code;
     }
 
@@ -222,7 +220,7 @@
       return root;
     } // 看一下用户是否传入了render,没传入，可能传入的是tenplate，template如果也没有传入
     // 将我们的html->词法解析（开始标签，结束标签，属性，文本）
-    // -> ast语法树 用来描述html的语法的 stack
+    // -> ast语法树 用来描述html的语法的 stack=[]
     // codegen <div>hello</div> -> _c('div',{},'hello') -> 让字符串执行
     // 字符串如何转成代码 如果用eval 比较耗性能，会有作用域问题
     // 模版引擎 new Function+with来实现
@@ -239,17 +237,24 @@
       return render; // html->ast（只能描述语法 语法不存在的属性无法描述）->render函数 (with+new Function)->虚拟dom（增加额外属性）-> 生成真实dom
     }
 
+    function patch(oldVnode, vnode) {
+      if (oldVnode.nodeType === 1) ;
+    }
+
     function lifecycleMixin(Vue) {
       Vue.prototype._update = function (vnode) {
-        console.log(vnode);
+        // 既有初始化，又有更新
+        var vm = this;
+        patch(vm.$el);
+        console.log(vm.$el, vnode);
       };
     }
     function mountComponent(vm, el) {
-      // 更新函数，数据变化后，会在此调用函数
+      // 更新函数，数据变化后，会再次调用函数
       var updateComponent = function updateComponent() {
         // 调用render函数，生成虚拟dom
         vm._update(vm._render()); // 后续更新可以调用updateComponent
-        // 用虚拟dom生成真实dom   
+        // 用虚拟dom生成真实dom  
 
       };
 
@@ -474,7 +479,8 @@
       Vue.prototype.$mount = function (el) {
         var vm = this;
         var options = vm.$options;
-        el = document.querySelector(el); // 把模版转换成对应的渲染函数 -> 虚拟dom概念vnode -> diff算法更新虚拟
+        el = document.querySelector(el);
+        vm.$el = el; // 把模版转换成对应的渲染函数 -> 虚拟dom概念vnode -> diff算法更新虚拟
         // dom -> 产生真实节点，更新
 
         if (!vm.$options.render) {
@@ -491,7 +497,7 @@
 
         console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
 
-        mountComponent(vm); // 组件的挂载
+        mountComponent(vm); // 组件的挂载流程
       };
     }
 
@@ -505,7 +511,8 @@
       return vnode(vm, tag, data, data.key, children, undefined);
     }
     function createTextElement(vm, text) {
-      return vnode(vm, undefined, undefined, undefined, undefined, undefined);
+      console.log('text', vm, text);
+      return vnode(vm, undefined, undefined, undefined, undefined, text);
     }
 
     function vnode(vm, tag, data, key, children, text) {
@@ -515,27 +522,25 @@
         data: data,
         key: key,
         children: children,
-        text: text
+        text: text // ...
+
       };
     }
 
     function renderMixin(Vue) {
-      Vue.prototype._c = function (tag, data) {
-        for (var _len = arguments.length, children = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-          children[_key - 2] = arguments[_key];
-        }
-
+      Vue.prototype._c = function () {
         //createElement
         return createElement.apply(void 0, [this].concat(Array.prototype.slice.call(arguments)));
       };
 
       Vue.prototype._v = function (text) {
-        //
-        return createTextElement(this);
+        //createTextElement
+        return createTextElement(this, text);
       };
 
       Vue.prototype._s = function (val) {
-        return JSON.stringify(val);
+        if (_typeof(val) == 'object') return JSON.stringify(val);
+        return val;
       };
 
       Vue.prototype._render = function () {

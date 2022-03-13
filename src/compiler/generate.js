@@ -56,15 +56,11 @@ function genChildren(el) {
 }
 
 export function generate(el) {
-    console.log('---------');
-
     // 遍历树，将树拼接成字符串
     let children = genChildren(el);
     let code = `_c('${el.tag}',${el.attrs.length ? genProps(el.attrs) : 'undefined'
         })${
         children?`,${children}`:''
         }`;
-
-    console.log(code);
     return code;
 }

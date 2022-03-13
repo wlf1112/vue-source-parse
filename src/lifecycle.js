@@ -1,16 +1,21 @@
+import { patch } from "./vdom/patch";
+
 export function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
-        console.log(vnode);
+        // 既有初始化，又有更新
+        const vm=this;
+        patch(vm.$el,vnode);
+        console.log(vm.$el,vnode);
     }
 }
 
 
 export function mountComponent(vm, el) {
-    // 更新函数，数据变化后，会在此调用函数
+    // 更新函数，数据变化后，会再次调用函数
     let updateComponent = () => {
         // 调用render函数，生成虚拟dom
         vm._update(vm._render());  // 后续更新可以调用updateComponent
-        // 用虚拟dom生成真实dom   
+        // 用虚拟dom生成真实dom  
     }
     updateComponent();
 }
