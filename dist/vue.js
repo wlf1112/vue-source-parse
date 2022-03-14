@@ -1,6 +1,6 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('rollup')) :
+    typeof define === 'function' && define.amd ? define(['rollup'], factory) :
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
@@ -237,30 +237,6 @@
       return render; // html->ast（只能描述语法 语法不存在的属性无法描述）->render函数 (with+new Function)->虚拟dom（增加额外属性）-> 生成真实dom
     }
 
-    function patch(oldVnode, vnode) {
-      if (oldVnode.nodeType === 1) ;
-    }
-
-    function lifecycleMixin(Vue) {
-      Vue.prototype._update = function (vnode) {
-        // 既有初始化，又有更新
-        var vm = this;
-        patch(vm.$el);
-        console.log(vm.$el, vnode);
-      };
-    }
-    function mountComponent(vm, el) {
-      // 更新函数，数据变化后，会再次调用函数
-      var updateComponent = function updateComponent() {
-        // 调用render函数，生成虚拟dom
-        vm._update(vm._render()); // 后续更新可以调用updateComponent
-        // 用虚拟dom生成真实dom  
-
-      };
-
-      updateComponent();
-    }
-
     function _typeof(obj) {
       "@babel/helpers - typeof";
 
@@ -294,6 +270,159 @@
         writable: false
       });
       return Constructor;
+    }
+
+    var id$1 = 0;
+
+    var Dep = /*#__PURE__*/function () {
+      // 每个属性都给他分配一个dep，dep可以用来存放watcher，watcher中还要存放这个dep
+      function Dep() {
+        _classCallCheck(this, Dep);
+
+        this.id = id$1++;
+        this.subs = []; // 用来存放watcher的
+      }
+
+      _createClass(Dep, [{
+        key: "depend",
+        value: function depend() {
+          //Dep.target Dep里要存放这个watcher,watcher要存放dep，多对对的关系
+          if (Dep.target) {
+            Dep.target.addDep(this);
+          }
+        }
+      }, {
+        key: "addSub",
+        value: function addSub(watcher) {
+          this.subs.push(watcher);
+        }
+      }, {
+        key: "notify",
+        value: function notify() {
+          this.subs.forEach(function (watcher) {
+            watcher.update();
+          });
+        }
+      }]);
+
+      return Dep;
+    }();
+
+    Dep.target = null;
+    function pushTarget(watcher) {
+      Dep.target = watcher;
+    }
+    function popTarget() {
+      Dep.target = null;
+    }
+
+    var id = 0;
+
+    var Watcher = /*#__PURE__*/function () {
+      // new Watcher(vm,updateComponent,()=>{
+      //     console.log('更新视图了');
+      // },true);
+      function Watcher(vm, exprOrFn, cb, options) {
+        _classCallCheck(this, Watcher);
+
+        this.vm = vm;
+        this.exprOrFn = exprOrFn;
+        this.cb = cb;
+        this.options = options;
+        this.id = id++; // 默认应该让exprOrFn执行 exprOrFn方法做了什么？render（去vm上取值）
+
+        this.getter = exprOrFn;
+        this.deps = [];
+        this.depsId = new Set();
+        this.get(); //默认初始化，要取值
+      }
+
+      _createClass(Watcher, [{
+        key: "get",
+        value: function get() {
+          // 稍后用户更新时，可以重新调用getter方法
+          // defineProperty.get 每个属性都可以收集自己的watcher
+          // 希望一个属性可以对应多个watcher,同时一个watcher可以对应多个属性
+          pushTarget(this); //Dep.target=watcher
+
+          this.getter(); // render()方法会去vm上取值
+
+          popTarget(); //Dep.target=null 如果Dep.target有值，说明这个变量在模板中使用了
+        }
+      }, {
+        key: "update",
+        value: function update() {
+          this.get();
+        }
+      }, {
+        key: "addDep",
+        value: function addDep(dep) {
+          var id = dep.id;
+
+          if (!this.depsId.has(id)) {
+            this.depsId.add(id);
+            this.deps.push(dep);
+            dep.addSub(this);
+          }
+        }
+      }]);
+
+      return Watcher;
+    }();
+
+    function patch(oldVnode, vnode) {
+      if (oldVnode.nodeType == 1) {
+        //用vnode来生成真实dom替换原来的dom元素
+        var parentElem = oldVnode.parentNode; // 找到它的父亲
+
+        var elm = createElm(vnode); // 在第一次渲染后是删除节点，下次使用无法获取
+
+        parentElem.insertBefore(elm, oldVnode.nextSibling);
+        parentElem.removeChild(oldVnode);
+        return elm;
+      }
+    }
+
+    function createElm(vnode) {
+      var tag = vnode.tag;
+          vnode.data;
+          var children = vnode.children;
+          vnode.text;
+          vnode.vm;
+
+      if (typeof tag === 'string') {
+        vnode.el = document.createElement(tag); // 虚拟节点会有一个el属性，对应真实节点
+
+        children.forEach(function (child) {
+          vnode.el.appendChild(createElm(child));
+        });
+      }
+
+      return vnode.el;
+    }
+
+    function lifecycleMixin(Vue) {
+      Vue.prototype._update = function (vnode) {
+        // 既有初始化，又有更新
+        var vm = this;
+        vm.$el = patch(vm.$el, vnode);
+      };
+    } // 后续每个组件渲染的时候都会有一个watcher
+
+    function mountComponent(vm, el) {
+      // 更新函数，数据变化后，会再次调用函数
+      var updateComponent = function updateComponent() {
+        // 调用render函数，生成虚拟dom
+        vm._update(vm._render()); // 后续更新可以调用updateComponent
+        // 用虚拟dom生成真实dom  
+
+      }; // 观察者模式：属性是“被观察者”  刷新页面：“观察者”
+      // updateComponent();
+
+
+      new Watcher(vm, updateComponent, function () {
+        console.log('更新视图了');
+      }, true); // 他是一个渲染watcher，后续有其他的watcher
     }
 
     function isFunction(val) {
@@ -392,14 +521,24 @@
       // value有可能是对象
       observe(value); // 本身用户默认值是对象套对象，需要递归处理（性能差）
 
+      var dep = new Dep(); // 每个属性都有一个dep属性
+
       Object.defineProperty(data, key, {
         get: function get() {
+          // 取值时希望将watcher和dep对应起来
+          if (Dep.target) {
+            // 此时是在模板中取值的
+            dep.depend(); // 让dep记住watcher
+          }
+
           return value;
         },
         set: function set(newV) {
+          if (newV === value) return;
           observe(newV); //如果用户赋值一个新对象，需要将这个对象进行劫持
 
           value = newV;
+          dep.notify();
         }
       });
     }
@@ -493,9 +632,8 @@
             var render = compilerFunction(template);
             options.render = render; // 生成渲染函数
           }
-        }
+        } //console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
 
-        console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
 
         mountComponent(vm); // 组件的挂载流程
       };

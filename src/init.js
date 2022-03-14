@@ -32,7 +32,7 @@ export function initMixin(Vue) { // 表示在vue的基础上做一次混合操�
                 options.render = render; // 生成渲染函数
             }
         }
-        console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
+        //console.log(options.render); // 调用render方法渲染成真实dom，替换掉页面内容
 
         mountComponent(vm, el);  // 组件的挂载流程
     }
